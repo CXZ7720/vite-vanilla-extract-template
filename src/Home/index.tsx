@@ -1,6 +1,7 @@
-import { AppShell, Burger, Flex } from '@mantine/core';
+import { AppShell, Burger, Flex, NavLink } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconVideo } from '@tabler/icons-react';
+import { Link, Outlet } from '@tanstack/react-router';
 
 
 
@@ -32,9 +33,18 @@ export const Home = () => {
         </Flex>
       </AppShell.Header>
 
-      <AppShell.Navbar p="md">Navbar</AppShell.Navbar>
+      <AppShell.Navbar>
+        <Link to='/'>
+          <NavLink label="Home" component='button'/>
+        </Link>
+        <Link to='/convert'>
+          <NavLink label="Convert Video" component='button'/>
+        </Link>
+      </AppShell.Navbar>
 
-      <AppShell.Main>Main</AppShell.Main>
+      <AppShell.Main>
+        <Outlet />
+      </AppShell.Main>
     </AppShell>
     )
 }
