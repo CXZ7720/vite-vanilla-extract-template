@@ -261,7 +261,7 @@ const Converter = (props: Partial<DropzoneProps>) => {
         <Text mt="xl" mb="xs">인코더 선택</Text>
         <Group>
           <Radio  checked={encoder === 'libx264'} label="x264" onChange={() => setEncoder("libx264")} />
-          <Radio  checked={encoder === 'libx265'} label="x265" onChange={() => setEncoder("libx265")} />
+          <Radio  checked={encoder === 'libx265'} label="x265 (Unstable)" onChange={() => setEncoder("libx265")} />
         </Group>
 
         <Text mt="xl">렌더링 품질 조정</Text>
