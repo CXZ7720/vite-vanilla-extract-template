@@ -6,7 +6,11 @@ import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), vanillaExtractPlugin(), TanStackRouterVite()],
+  plugins: [react(), vanillaExtractPlugin(), TanStackRouterVite({
+    experimental: {
+      enableCodeSplitting: true,
+    }
+  })],
   optimizeDeps: {
     exclude: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
   },

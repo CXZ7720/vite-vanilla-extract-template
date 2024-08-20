@@ -45,6 +45,9 @@ const Converter = (props: Partial<DropzoneProps>) => {
   const [spentTime, setSpentTime] = useState<number>(0);
   const [preset, setPreset] = useState<string | null>("ultrafast");
   const [quality, setQuality] = useState<number>(18);
+
+  const [outputLog, setOutputLog] = useState<string>("");
+
   const [resolution, setResolution] = useState<{
     input: { width: number; height: number };
     output: { width: number; height: number };
@@ -54,6 +57,21 @@ const Converter = (props: Partial<DropzoneProps>) => {
   });
 
   const ffmpegRef = useRef(new FFmpeg());
+  const consoleRef = useRef<HTMLDivElement>(null);
+
+  const video = document.createElement("video");
+  video.preload = "metadata";
+
+  video.onloadedmetadata = function () {
+    setResolution((prev) => ({
+      ...prev,
+      input: {
+        width: video.videoWidth,
+        height: video.videoHeight,
+      },
+    }));
+    
+  };
 
   useEffect(() => {
     load();
@@ -81,6 +99,12 @@ const Converter = (props: Partial<DropzoneProps>) => {
 
     ffmpeg.on("log", (message) => {
       console.log(message.message);
+      setOutputLog((prev) => prev + message.message + "\n");
+      // scroll to bottom
+      consoleRef.current!.scrollTo({
+        top: consoleRef.current!.scrollHeight,
+        behavior: "smooth",
+      });
     });
 
     await ffmpeg.load({
@@ -141,25 +165,13 @@ const Converter = (props: Partial<DropzoneProps>) => {
     const url = URL.createObjectURL(blob);
     outvideo.src = url;
     setConvertedVideoInput(url);
+    outvideo.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
     <>
       <Dropzone
         onDrop={(files) => {
-          const video = document.createElement("video");
-          video.preload = "metadata";
-
-          video.onloadedmetadata = function () {
-            setResolution((prev) => ({
-              ...prev,
-              input: {
-                width: video.videoWidth,
-                height: video.videoHeight,
-              },
-            }));
-          };
-
           const url = URL.createObjectURL(files[0]);
           video.src = url;
           setOriginalVideo(files[0]);
@@ -230,6 +242,7 @@ const Converter = (props: Partial<DropzoneProps>) => {
                 setConvertedVideoInput(undefined);
                 setProgress(0);
                 setStartDisabled(false);
+                setOutputLog("");
               }}
             >
               업로드된 파일 지우기
@@ -238,7 +251,7 @@ const Converter = (props: Partial<DropzoneProps>) => {
         )}
       </Flex>
 
-      <Paper my="md" shadow="xs" p={30}>
+      <Paper my="md" shadow="xs" p={60}>
         <Select
           label="변환 프리셋"
           placeholder="프리셋 선택"
@@ -258,10 +271,20 @@ const Converter = (props: Partial<DropzoneProps>) => {
           }}
         />
 
-        <Text mt="xl" mb="xs">인코더 선택</Text>
+        <Text mt="xl" mb="xs">
+          인코더 선택
+        </Text>
         <Group>
-          <Radio  checked={encoder === 'libx264'} label="x264" onChange={() => setEncoder("libx264")} />
-          <Radio  checked={encoder === 'libx265'} label="x265 (Unstable)" onChange={() => setEncoder("libx265")} />
+          <Radio
+            checked={encoder === "libx264"}
+            label="x264"
+            onChange={() => setEncoder("libx264")}
+          />
+          <Radio
+            checked={encoder === "libx265"}
+            label="x265 (Unstable)"
+            onChange={() => setEncoder("libx265")}
+          />
         </Group>
 
         <Text mt="xl">렌더링 품질 조정</Text>
@@ -332,13 +355,17 @@ const Converter = (props: Partial<DropzoneProps>) => {
               Resoultion(W x H) : {resolution.input.width}x
               {resolution.input.height}
             </Text>
+            <Text>
+              Duration : {originalVideo.type} (.
+              {originalVideo.name.split(".")[1]})
+            </Text>
 
             <Collapse
               in={opened}
               transitionDuration={300}
               transitionTimingFunction="linear"
             >
-              <video src={videoInput} controls style={{ maxWidth: "100%" }} />
+              <video src={videoInput} controls style={{ maxWidth: 360 }} />
             </Collapse>
           </>
         )}
@@ -348,10 +375,18 @@ const Converter = (props: Partial<DropzoneProps>) => {
           <Progress.Label>변환중.. ({progress.toFixed(2)}%)</Progress.Label>
         </Progress.Section>
       </Progress.Root>
+
+      {outputLog && (
+        <Code block my="lg" ref={consoleRef} mah={600}>
+          {outputLog}
+        </Code>
+      )}
+
       <Code block my="md">
         // 사용한 ffmpeg 커맨드
         <br />
-        ffmpeg -i {originalVideo?.name ?? ""} -c:v {encoder} -crf {quality} <br />
+        ffmpeg -i {originalVideo?.name ?? ""} -c:v {encoder} -crf {quality}{" "}
+        <br />
         -preset {preset} -c:a copy -vf scale=-1:720 output.mp4
       </Code>
       <Flex direction="column" gap="md" mt="md">
@@ -375,7 +410,7 @@ const Converter = (props: Partial<DropzoneProps>) => {
             <video
               src={convertedVideoInput}
               controls
-              style={{ maxWidth: "100%" }}
+              style={{ maxWidth: 360 }}
             />
           </>
         )}
