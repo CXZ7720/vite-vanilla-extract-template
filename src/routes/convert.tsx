@@ -1,4 +1,4 @@
-import { createLazyFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import { Dropzone, DropzoneProps, FileWithPath } from "@mantine/dropzone";
@@ -28,8 +28,11 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { useDisclosure } from "@mantine/hooks";
 
-export const Route = createLazyFileRoute("/convert")({
+export const Route = createFileRoute("/convert")({
   component: () => <Converter />,
+  loader: ({ context }) => {
+    console.log(context.user);
+  }
 });
 
 const Converter = (props: Partial<DropzoneProps>) => {
@@ -70,7 +73,6 @@ const Converter = (props: Partial<DropzoneProps>) => {
         height: video.videoHeight,
       },
     }));
-    
   };
 
   useEffect(() => {
@@ -141,8 +143,8 @@ const Converter = (props: Partial<DropzoneProps>) => {
       preset ?? "ultrafast",
       "-c:a",
       "copy",
-      "-vf",
-      "scale=-1:720",
+      // "-vf",
+      // "scale=-1:720",
       "output.mp4",
     ]);
     const fileData = await ffmpeg.readFile("output.mp4");
@@ -386,6 +388,7 @@ const Converter = (props: Partial<DropzoneProps>) => {
         // 사용한 ffmpeg 커맨드
         <br />
         ffmpeg -i {originalVideo?.name ?? ""} -c:v {encoder} -crf {quality}{" "}
+        {encoder == "libx265" ? "-tag:v hvc1" : ""} <br />
         <br />
         -preset {preset} -c:a copy -vf scale=-1:720 output.mp4
       </Code>
